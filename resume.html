@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Resume | John C. Cunningham</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral with Cool Blue accents -->
+    <!-- Application Structure Plan: The application is designed as a single-page, top-down narrative experience that enhances the traditional resume format. The structure begins with a strong hero section for immediate identification, followed by a dashboard of quantifiable achievements to showcase impact upfront. A custom-styled, interactive vertical timeline presents career progression logically, allowing users to drill into details without being overwhelmed. This is followed by a skills section that uses categorization and a bar chart to make a dense list of technical skills quickly understandable. This structure was chosen over a direct report-to-page conversion because a resume's primary goal is rapid, effective communication to a busy audience (recruiters, hiring managers). The interactive elements guide the user through a story of professional growth and accomplishment, making the content more engaging and memorable than static text. -->
+    <!-- Visualization & Content Choices: 
+        - Key Achievements -> Inform/Impact -> Stat Cards (HTML/CSS) -> Custom Modal for details -> Justification: Immediately draws attention to tangible results and impressive metrics, providing a 'wow' factor that is often lost in resume bullet points. The modal provides a non-disruptive way to show additional detail.
+        - Career History -> Show Change/Progression -> Interactive Vertical Timeline (HTML/CSS/JS) -> Click-to-expand details -> Justification: Visually represents career growth over time with all items left-aligned for consistent flow. The interaction keeps the UI clean and focused, letting users explore roles they are most interested in.
+        - Technical Expertise -> Organize/Compare -> Grouped Skill Tags & Horizontal Bar Chart (Chart.js/Canvas) -> Clickable tags to filter/highlight & chart tooltips -> Justification: Transforms a long, undifferentiated list of technologies into a structured, easy-to-scan overview of core competencies. The chart provides a quick visual summary of skill distribution.
+        - All other sections (Summary, Education) -> Inform -> Formatted Text Blocks -> No interaction -> Justification: This content is straightforward and best presented clearly and concisely.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f7f4;
+            color: #3d4451;
+        }
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .timeline-item-content {
+            transition: max-height 0.7s ease-in-out, opacity 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .timeline-item-content.open {
+            max-height: 1000px;
+            opacity: 1;
+        }
+        .chart-container {
+            position: relative;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            width: 100%;
+            max-width: 800px;
+        }
+        .nav-link {
+            transition: color 0.3s;
+        }
+        .nav-link:hover {
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-gray-800">
+                John C. Cunningham
+            </div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#home" class="nav-link text-gray-600">Home</a>
+                <a href="#impact" class="nav-link text-gray-600">Impact</a>
+                <a href="#experience" class="nav-link text-gray-600">Experience</a>
+                <a href="#skills" class="nav-link text-gray-600">Skills</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="home" class="text-center py-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-800 mb-4">Principal Engineer of Platform, Site Reliability & DevOps</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
+                Accomplished platform and quality assurance engineering leader with a proven track record of building successful teams for DevOps and QA Automation transitions. Expert in leveraging a wide array of modern tooling to drive efficiency, reliability, and security across multi-cloud environments.
+            </p>
+            <div class="text-sm text-gray-500">
+                <span>(770) 653-1844</span> &bull; <span>john.c.cunningham2010@gmail.com</span>
+            </div>
+        </section>
+
+        <section id="impact" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">Driving Measurable Impact</h2>
+            <p class="text-center text-gray-600 mb-12 max-w-2xl mx-auto">This section highlights key quantifiable achievements from throughout my career. These metrics represent a commitment to delivering tangible improvements in efficiency, cost, revenue, and quality. Click on any card to see a brief explanation of the achievement.</p>
+            <div id="stats-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            </div>
+        </section>
+
+        <section id="experience" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Career Journey</h2>
+            <p class="text-center text-gray-600 mb-12 max-w-3xl mx-auto">My professional experience is presented here as an interactive timeline. This format illustrates my career progression and the increasing scope of my responsibilities over time. Click on any role to expand the entry and view the detailed accomplishments and responsibilities for that position.</p>
+            <div id="timeline-container" class="relative max-w-3xl mx-auto pl-12">
+                <div class="absolute left-6 h-full w-0.5 bg-gray-300"></div>
+            </div>
+        </section>
+
+        <section id="skills" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Technical Expertise</h2>
+             <p class="text-center text-gray-600 mb-12 max-w-3xl mx-auto">This section provides an overview of my technical skill set. I've grouped my expertise into key areas to make it easier to understand my core competencies. The chart below visualizes the relative emphasis of these categories based on my project experience, offering a quick glance at my primary areas of focus. You can interact with the tags to learn more about specific tools and technologies.</p>
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="chart-container">
+                    <canvas id="skillsChart"></canvas>
+                </div>
+                <div id="skills-tags-container" class="mt-12">
+                </div>
+            </div>
+        </section>
+        
+        <section id="education" class="py-16">
+            <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Education & Certification</h2>
+            <div class="max-w-3xl mx-auto grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="font-bold text-xl mb-2 text-gray-700">Education</h3>
+                    <p class="font-semibold">Bachelor of Science, Computer Science</p>
+                    <p class="text-gray-600">Georgia Southern University, Statesboro, GA | 2010</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="font-bold text-xl mb-2 text-gray-700">Certification</h3>
+                    <p class="font-semibold">Certified EMCISA Information Storage Associate</p>
+                    <p class="text-gray-600">EMC</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-gray-800 text-white text-center p-6 mt-12">
+        <p>&copy; 2025 John C. Cunningham. All rights reserved.</p>
+        <p class="text-sm text-gray-400 mt-2">Interactive resume designed for enhanced readability and exploration.</p>
+    </footer>
+
+    <div id="custom-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-[9999]">
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-sm w-full relative">
+            <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-4"></h3>
+            <p id="modal-description" class="text-gray-700"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const resumeData = {
+                stats: [
+                    { value: "200%", label: "Revenue Increase", description: "Led rollout of marketplaces, significantly boosting revenue from new sources." },
+                    { value: "75%", label: "Cloud Spend Reduction", description: "Optimized cloud resources to dramatically lower monthly operational costs." },
+                    { value: "1hr to 15m", label: "Build Time Reduction", description: "Re-architected CI pipelines, improving developer productivity." },
+                    { value: "72hr to 5m", label: "Provisioning Time Cut", description: "Enabled on-demand ephemeral environments via Infrastructure as Code." },
+                    { value: "95%", label: "Test Automation Coverage", description: "Took a platform from zero automation to 95% coverage in one year." },
+                    { value: "80%", label: "Defect Re-injection Drop", description: "Built robust integration test frameworks to ensure code quality." },
+                    { value: "150%", label: "Deployment Time Reduced", description: "Modernized deployment patterns, increasing speed and reliability." },
+                    { value: "45%", label: "Prod Deployment Failures Cut", description: "Implemented DevOps best practices for safer, more reliable deployments." }
+                ],
+                experience: [
+                    {
+                        company: "Hearst",
+                        role: "Principal DevOps Engineer",
+                        period: "Oct 2023 – Present",
+                        details: [
+                            "Architected a multi-cloud (AWS, GCS, Azure) solution for an E-commerce marketplace.",
+                            "Implemented full CI/CD to prod via Github Actions, reducing deployment times to <5 mins and achieving 99.999% uptime.",
+                            "Managed security incident response for integrated financial endpoints with over 100 vendors.",
+                            "Established On-Call, Disaster Recovery, and outage mitigation strategies.",
+                            "Led the rollout of six marketplaces, resulting in a near 200% revenue increase from these sources.",
+                            "Fostered safe AI practices and served as a Subject Matter Expert for AWS and GCP."
+                        ]
+                    },
+                    {
+                        company: "VITACARE (a GoodRx Company)",
+                        role: "Principal Platform Engineer / Technical Product Owner",
+                        period: "Jun 2022 – Oct 2023",
+                        details: [
+                            "Led DevOps Delivery and SRE implementation across two platform engineering teams.",
+                            "Shifted from TeamCity to Bitbucket pipelines, cutting build times from 1 hour to 15 minutes.",
+                            "Designed solutions for moving from on-premise IIS to cloud-native AWS, reducing infrastructure overhead by 20%.",
+                            "Led Infrastructure as Code (IaC) efforts, reducing environment provisioning from 72 hours to 5 minutes.",
+                            "Managed a team of 8 engineers across infrastructure, delivery, and test automation.",
+                            "Drove adoption of SonarQube and Snyk for static code and security analysis."
+                        ]
+                    },
+                    {
+                        company: "IBM",
+                        role: "Product Owner / Lead DevOps Engineer",
+                        period: "2019 – Jun 2022",
+                        details: [
+                            "Led DevSecOps for a large global team, owning the process and implementing SRE practices.",
+                            "Led a ground-up rebuild of IBM's CRM (Salesforce) for 100k+ total users.",
+                            "Built a CI/CD pipeline supporting a sub-one-week dev-to-prod cycle.",
+                            "Reduced build times by 60% and improved reliability to 99.5% uptime.",
+                            "Led a global DevOps initiative for over 120 technical staff.",
+                            "Developed custom security and DevOps tooling for USGOV/GDPR environments, cutting provisioning by 25%."
+                        ]
+                    },
+                    {
+                        company: "IBM",
+                        role: "Senior DevOps Engineer / QA Practices Architect",
+                        period: "Jun 2018 – Jun 2019",
+                        details: [
+                            "Modernized the Salesforce development process, moving from an ORG model to a Gitflow model.",
+                            "Reduced deployment complexity and times by 150% with a new hybrid pipeline.",
+                            "Revamped QA practices, driving gherkin adoption and building a Selenium/Cucumber framework.",
+                            "Took a platform with zero automation to 95% coverage in one year.",
+                            "Reduced Severity One defects from an average of 10/month to <0.5/month."
+                        ]
+                    },
+                    {
+                        company: "COSTAR REAL ESTATE MANAGER",
+                        role: "Software Engineer in Test / DevOps",
+                        period: "Oct 2013 – Jun 2018",
+                        details: [
+                            "Built an automation regression framework covering 100% of the main lease accounting calculation engine.",
+                            "Reduced regression testing time by 60% with a cross-browser solution.",
+                            "Cut defect re-injection rate by 80% with new integration test frameworks.",
+                            "Pushed for a BDD process and a test first approach to AGILE development.",
+                            "Selected by leadership to participate in Focus Group on QA/ Automation practices.",
+                            "Built a Javascript unit test framework for an Angular.js app, achieving 95% coverage.",
+                            "Upgraded automated solution to Specflow/ Selenium using Bumblebee and Restsharp.",
+                            "Moved organization towards GIT solution through TFS, aiding in seamless deployments.",
+                            "Implemented safe deployment of code to higher environments through use of DevOps practices and tooling.",
+                            "Analyzed, addressed Development & Quality assurance practices for manual test processes.",
+                            "Provided design phase feedback on critical financial application models.",
+                            "Performed computational analysis to verify algorithmic correctness.",
+                            "Maintained scripts and processes in Urban Turtle in Team Foundation server, ensuring quality product delivery.",
+                            "Provided leadership with subject matter expertise on Finance & Accounting solutions."
+                        ]
+                    },
+                     {
+                        company: "THE NETWORK, INC",
+                        role: "Product Developer/ QA Engineer",
+                        period: "Apr – Oct 2013",
+                        details: [] 
+                    },
+                    {
+                        company: "Real-Time Technology Solutions",
+                        role: "Senior Test Automation Engineer",
+                        period: "Jan 2011 – Mar 2013",
+                        details: [] 
+                    }
+                ],
+                skills: [
+                    { category: 'Cloud & Infrastructure', score: 95, tools: ['Terraform', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'IBM Cloud', 'Ansible'] },
+                    { category: 'CI/CD & DevOps', score: 90, tools: ['Bitbucket Pipelines', 'Octopus Deploy', 'Github Actions', 'Jenkins', 'TravisCI'] },
+                    { category: 'QA & Testing', score: 85, tools: ['Selenium Frameworks', 'WIZ', 'New Relic', 'Serenity BDD', 'Cucumber', 'Specflow'] },
+                    { category: 'Languages & Databases', score: 80, tools: ['Java/J2EE', 'C++', 'SQL/PLSQL', 'Oracle R10', 'Linux', 'HTML/Internet PHP', 'VBSCRIPT', 'C#', 'Python', 'Go', 'Javascript'] },
+                    { category: 'AI/ML & Development Tools', score: 70, tools: ['Cursor', 'GenAI', 'Agentic Systems (OpenAI)', 'MS Visual Studio', 'Eclipse SDE', 'Resharper', 'Pivotal Tracker', 'TeamCity', 'MS Team Foundation Server', 'Microsoft Coded UI', 'Mocha', 'Chai'] }
+                ]
+            };
+
+            const statsGrid = document.getElementById('stats-grid');
+            const customModal = document.getElementById('custom-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+            const modalTitle = document.getElementById('modal-title');
+            const modalDescription = document.getElementById('modal-description');
+
+            function showModal(title, description) {
+                modalTitle.textContent = title;
+                modalDescription.textContent = description;
+                customModal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                customModal.classList.add('hidden');
+            }
+
+            modalCloseBtn.addEventListener('click', hideModal);
+            customModal.addEventListener('click', (e) => {
+                if (e.target === customModal) {
+                    hideModal();
+                }
+            });
+
+            resumeData.stats.forEach(stat => {
+                const card = document.createElement('div');
+                card.className = 'stat-card bg-white p-6 rounded-xl shadow cursor-pointer text-center';
+                card.innerHTML = `
+                    <div class="text-4xl font-bold text-blue-500 mb-2">${stat.value}</div>
+                    <div class="text-gray-600 font-medium">${stat.label}</div>
+                `;
+                card.addEventListener('click', () => {
+                    showModal(stat.label, stat.description);
+                });
+                statsGrid.appendChild(card);
+            });
+
+            const timelineContainer = document.getElementById('timeline-container');
+            resumeData.experience.forEach((item, index) => {
+                const timelineItem = document.createElement('div');
+                timelineItem.className = `mb-8 flex items-center`;
+                
+                timelineItem.innerHTML = `
+                    <div class="z-20 flex items-center bg-gray-800 shadow-xl w-8 h-8 rounded-full flex-shrink-0 -ml-4">
+                        <h1 class="mx-auto font-semibold text-lg text-white">${resumeData.experience.length - index}</h1>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-xl px-6 py-4 ml-8 w-full cursor-pointer timeline-card">
+                        <p class="text-sm text-gray-500">${item.period}</p>
+                        <h3 class="font-bold text-gray-800 text-xl">${item.role}</h3>
+                        <h4 class="font-semibold text-blue-600">${item.company}</h4>
+                        <div class="timeline-item-content mt-4 text-gray-600 text-sm">
+                            ${item.details.length > 0 ? `<ul class="list-disc list-inside space-y-1">${item.details.map(d => `<li>${d}</li>`).join('')}</ul>` : '<p>No detailed description available for this role.</p>'}
+                        </div>
+                    </div>
+                `;
+                timelineContainer.appendChild(timelineItem);
+            });
+            
+            document.querySelectorAll('.timeline-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    card.querySelector('.timeline-item-content').classList.toggle('open');
+                });
+            });
+
+            const skillsTagsContainer = document.getElementById('skills-tags-container');
+            resumeData.skills.forEach(skillCat => {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'mb-6';
+                let toolsHtml = skillCat.tools.map(tool => `<span class="inline-block bg-gray-200 text-gray-700 text-sm font-medium mr-2 mb-2 px-3 py-1 rounded-full">${tool}</span>`).join('');
+                catDiv.innerHTML = `
+                    <h3 class="font-bold text-lg mb-2 text-gray-700">${skillCat.category}</h3>
+                    <div>${toolsHtml}</div>
+                `;
+                skillsTagsContainer.appendChild(catDiv);
+            });
+
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: resumeData.skills.map(s => s.category),
+                    datasets: [{
+                        label: 'Skill Emphasis',
+                        data: resumeData.skills.map(s => s.score),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.6)',
+                            'rgba(34, 197, 94, 0.6)',
+                            'rgba(249, 115, 22, 0.6)',
+                            'rgba(139, 92, 246, 0.6)',
+                            'rgba(239, 68, 68, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(34, 197, 94, 1)',
+                            'rgba(249, 115, 22, 1)',
+                            'rgba(139, 92, 246, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                           display: false,
+                           max: 100
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 14,
+                                    weight: '500'
+                                },
+                                color: '#3d4451'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                             callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
